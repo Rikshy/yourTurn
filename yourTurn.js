@@ -50,7 +50,7 @@ export default class TurnSubscriber {
             ytImgClass.push("silhoutte");
         }
         else {
-            ytText = `${ytName}'s Turn!`;
+            ytText = `${ytName}'s ${game.i18n.localize('YOUR-TURN.Turn')}!`;
         }
 
         let nextCombatant = this.getNextCombatant(combat);
@@ -108,7 +108,7 @@ export default class TurnSubscriber {
         bannerDiv.innerHTML = `
             <p id="yourTurnText" class="yourTurnText">${ytText}</p>
             <div class="yourTurnSubheading">
-                Round #${combat.round} Turn #${combat.turn + 1}
+                ${game.i18n.localize('YOUR-TURN.Round')} #${combat.round} ${game.i18n.localize('YOUR-TURN.Turn')} #${combat.turn + 1}
             </div>
             ${this.getNextTurnHtml(nextCombatant)}
             <div id="yourTurnBannerBackground" class="yourTurnBannerBackground" height="150" />`;
@@ -186,7 +186,7 @@ export default class TurnSubscriber {
             }
         }
 
-        return `<div class="yourTurnSubheading last">Next Up : <img class="${imgClass}" src="${combatant.actor.img}" />${name}</div>`;
+        return `<div class="yourTurnSubheading last">${game.i18n.localize('YOUR-TURN.NextUp')}: <img class="${imgClass}" src="${combatant.actor.img}" />${name}</div>`;
     }
 
     static checkAndDelete(elementID) {
