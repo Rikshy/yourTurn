@@ -43,10 +43,10 @@ export default class TurnSubscriber {
 
 
         if (combat?.combatant?.isOwner && !game.user.isGM && combat?.combatant?.players[0]?.active) {
-            ytText = `It's your Turn, ${ytName}!`;
+            ytText = `${game.i18n.localize('YOUR-TURN.YourTurn')}, ${ytName}!`;
         }
         else if (combat?.combatant?.hidden && !game.user.isGM) {
-            ytText = `Something is happening....`
+            ytText = game.i18n.localize('YOUR-TURN.SomethingHappens');
             ytImgClass.push("silhoutte");
         }
         else {
