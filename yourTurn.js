@@ -130,7 +130,7 @@ export default class TurnSubscriber{
         bannerDiv.id = "yourTurnBanner";
         bannerDiv.className = "yourTurnBanner";
         bannerDiv.style.height = 150;
-        bannerDiv.innerHTML = `<p id="yourTurnText" class="yourTurnText">${ytText}</p><div class="yourTurnSubheading">Round #${combat.round} Turn #${combat.turn}</div>${this.getNextTurnHtml(nextCombatant)}<div id="yourTurnBannerBackground" class="yourTurnBannerBackground" height="150"></div>`;
+        bannerDiv.innerHTML = `<p id="yourTurnText" class="yourTurnText">${ytText}</p><div class="yourTurnSubheading">Round #${combat.round} Turn #${combat.turn + 1}</div>${this.getNextTurnHtml(nextCombatant)}<div id="yourTurnBannerBackground" class="yourTurnBannerBackground" height="150"></div>`;
         
         
 
