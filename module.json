@@ -1,11 +1,14 @@
 {
   "id": "your-turn",
-  "title": "Your Turn!",
+  "title": "Your Turn! (Rikshy's fork)",
   "description": "A simple module which adds a user specific to do list.",
   "version": "1.00",
   "authors": [
     {
       "name": "Autmor"
+    },
+    {
+      "name": "Rikshy"
     }
   ],
   "esmodules": [
