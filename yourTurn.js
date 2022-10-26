@@ -22,7 +22,7 @@ export default class TurnSubscriber {
     static _onUpdateCombat(combat, update, options, userId) {
         if (!(update["turn"] || update["round"])) { return; }
 
-        if (!combat.started) { return; }
+        if (combat === null || !combat.started) { return; }
 
         if (combat.combatant == this.lastCombatant) { return; }
 
@@ -195,9 +195,19 @@ export default class TurnSubscriber {
         let combatant = ''
         let j = 1;
 
+        let turns = combat.turns;
+        if (game.modules.get('monks-little-details')?.active && !game.user.isGM && game.settings.get('monks-little-details', 'hide-until-turn')) {
+            const started = (combat.turns.length > 0) && (combat.round > 0);
+
+            turns = combat.turns.filter((t, index) => {
+                let combatant = combat.turns.find(c => c.id == t.id);
+                return combatant.hasPlayerOwner || (started && (combat.round > 1 || combat.turn >= index));
+            });        
+        }
+
         do {
-            combatant = combat?.turns[(combat.turn + j++) % combat.turns.length];
-        } while (combatant.hidden && (j < combat.turns.length) && !game.user.isGM)
+            combatant = turns[(combat.turn + j++) % turns.length];
+        } while (combatant.hidden && (j < turns.length) && !game.user.isGM)
 
         return combatant;
     }
