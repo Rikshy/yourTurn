@@ -29,6 +29,15 @@
       "path": "lang/de.json"
     }
   ],
+	"relationships": {
+		"requires": [
+			{
+				"id": "color-picker",
+				"type": "module",
+				"manifest": "https://github.com/Larkinabout/fvtt-color-picker/releases/latest/download/module.json"
+			}
+		]
+	},
   "url": "https://github.com/Autmor/yourTurn",
   "manifest": "",
   "download": "",

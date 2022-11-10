@@ -1,27 +1,41 @@
-export default class TurnSubscriber {
-    static gmColor;
-    static myTimer;
+Hooks.on("init", () => {
+	game.settings.register("your-turn", "tokenImage", {
+		scope: "world",
+		config: true,
+		name: game.i18n.localize('YOUR-TURN.Setting-TokenImage'),
+		type: Boolean,
+		default: false
+	});
+	game.settings.register("your-turn", "UseFixedNpcColor", {
+		scope: "world",
+		config: true,
+		name: game.i18n.localize('YOUR-TURN.Setting-UseFixedNpcColor'),
+		type: Boolean,
+		default: false
+	});
+    ColorPicker.register("your-turn", "NpcColor",  {
+          name: game.i18n.localize('YOUR-TURN.Setting-FixedNpcColor'),
+          default: "#004040",
+          scope: "world",
+          config: true
+        }, {
+          format: "hex"
+        }
+      )
+});
 
-    static imgCount = 1;
-    static currentImgID = null;
-    static nextImgID;
+Hooks.on("ready", () => {
+    Hooks.on("updateCombat", (combat, update, options, userId) => {
+        TurnSubscriber.onUpdateCombat(combat, update);
+    });
+});
+
+export default class TurnSubscriber {
+    static myTimer;
 
     static lastCombatant;
 
-    static begin() {
-        Hooks.on("ready", () => {
-            const firstGm = game.users.find((u) => u.isGM && u.active);
-            if (firstGm === null)
-                this.gmColor = "#cc3828";
-            else
-                this.gmColor = firstGm["color"];
-            Hooks.on("updateCombat", (combat, update, options, userId) => {
-                TurnSubscriber.onUpdateCombat(combat, update, options, userId);
-            });
-        });
-    }
-
-    static onUpdateCombat(combat, update, options, userId) {
+    static onUpdateCombat(combat, update) {
         if (!(update["turn"] || update["round"])) { return; }
 
         if (combat === null || !combat.started) { return; }
@@ -30,76 +44,25 @@ export default class TurnSubscriber {
 
         this.lastCombatant = combat.combatant;       
 
+        let color = "";
+        if (combat.combatant?.hasPlayerOwner && combat.combatant?.players[0].active) {
+            color = combat?.combatant?.players[0]["color"];
+        }
+        else if (game.settings.get("your-turn", "UseFixedNpcColor")) {
+            color = game.settings.get("your-turn", "NpcColor");
+        } else {
+            color = game.users.find((u) => u.isGM && u.active)["color"];
+        }
+
         var r = document.querySelector(':root');
-        if (combat?.combatant?.hasPlayerOwner && combat?.combatant?.players[0].active) {
-            const ytPlayerColor = combat?.combatant?.players[0]["color"];
-            r.style.setProperty('--yourTurnPlayerColor', ytPlayerColor);
-            r.style.setProperty('--yourTurnPlayerColorTransparent', ytPlayerColor + "80");
-        }
-        else {
-            r.style.setProperty('--yourTurnPlayerColor', this.gmColor);
-            r.style.setProperty('--yourTurnPlayerColorTransparent', this.gmColor + "80");
-        }
+        r.style.setProperty('--yourTurnPlayerColor', color);
+        r.style.setProperty('--yourTurnPlayerColorTransparent', color + "80");
 
-        var container = this.getOrCreateContainer(); 
-
-        container.append(this.createNextImage(combat));
-        
-        //current Actor Image
-        var ytImgClass = new Array();
-        ytImgClass.push("adding");        
-        if (combat?.combatant?.hidden && !game.user.isGM) {
-            ytImgClass.push("silhoutte");
-        }
-
-        if (this.currentImgID == null) {
-            this.currentImgID = `yourTurnImg${this.imgCount - 1}`;
-
-            let currentImgHTML = document.createElement("img");
-            currentImgHTML.id = this.currentImgID;
-            currentImgHTML.className = "yourTurnImg";
-            currentImgHTML.src = combat?.combatant.actor.img;
-
-            container.append(currentImgHTML);
-        }
-
-        let currentImgHTML = document.getElementById(this.currentImgID);
-        while (ytImgClass.length > 0) {
-            currentImgHTML.classList.add(ytImgClass.pop());
-        }
-
+        var container = this.getOrCreateContainer();
+        container.append(this.createCurrentImg(combat.combatant));
         container.append(this.createBanner(combat));
 
-        clearInterval(this?.myTimer);
-        this.myTimer = setInterval(() => {
-            this.unloadImage()
-        }, 5000);
-    }
-
-    static loadNextImage(combat) {
-        //Put next turns image in a hidden side banner
-        let hiddenImgHTML = `
-            <div id="yourTurnPreload">
-                <img id="yourTurnPreloadImg" src=${combat?.turns[(combat.turn + 1) % combat.turns.length].actor.img} loading="eager" width="800" height="800" />
-            <div>`;
-
-        if ($("body").find(`div[id="yourTurnPreload"]`).length > 0) {
-            $("body").find(`div[id="yourTurnPreload"]`).remove();
-        }
-
-        $("body").append(hiddenImgHTML);
-    }
-
-    static unloadImage() {
-        clearInterval(this.myTimer);
-        var element = document.getElementById("yourTurnBannerBackground");
-        element.classList.add("removing");
-
-        element = document.getElementById("yourTurnBanner");
-        element.classList.add("removing");
-
-        element = document.getElementById(this.currentImgID);
-        element.classList.add("removing");
+        this.handleUnload();
     }
 
     static getOrCreateContainer() {
@@ -117,11 +80,42 @@ export default class TurnSubscriber {
         return container;
     }
 
+    static createCurrentImg(combatant) {
+        this.checkAndDelete("yourTurnImg");
+        
+        //current Actor Image
+        var ytImgClass = new Array();
+        ytImgClass.push("adding");        
+        if (combatant?.hidden && !game.user.isGM) {
+            ytImgClass.push("silhoutte");
+        }
+
+        let img = "";
+        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
+            img = combatant.token.texture.src;
+            ytImgClass.push("token");
+        }
+        else {
+            img = combatant.actor.img;
+        }
+
+        let currentImgHTML = document.createElement("img");
+        currentImgHTML.id = "yourTurnImg";
+        currentImgHTML.className = "yourTurnImg";
+        currentImgHTML.src = img;
+
+        while (ytImgClass.length > 0) {
+            currentImgHTML.classList.add(ytImgClass.pop());
+        }
+
+        return currentImgHTML;
+    }
+
     static createBanner(combat) {
         this.checkAndDelete("yourTurnBanner");
 
-        let text = this.getBannerText(combat);
-        let nextCombatant = this.getNextCombatant(combat);
+        const text = this.getBannerText(combat.combatant);
+        const nextCombatant = this.getNextCombatant(combat);
 
         let bannerDiv = document.createElement("div");
         bannerDiv.id = "yourTurnBanner";
@@ -130,7 +124,7 @@ export default class TurnSubscriber {
         bannerDiv.innerHTML = `
             <p id="yourTurnText" class="yourTurnText">${text}</p>
             <div class="yourTurnSubheading">
-                ${game.i18n.localize('YOUR-TURN.Round')} #${combat.round} ${game.i18n.localize('YOUR-TURN.Turn')} #${combat.turn + 1}
+                ${game.i18n.localize("YOUR-TURN.Round")} #${combat.round} ${game.i18n.localize('YOUR-TURN.Turn')} #${combat.turn + 1}
             </div>
             ${this.getNextTurnHtml(nextCombatant)}
             <div id="yourTurnBannerBackground" class="yourTurnBannerBackground" height="150" />`;
@@ -138,13 +132,13 @@ export default class TurnSubscriber {
         return bannerDiv;
     }
 
-    static getBannerText(combat) {
-        var name = this.getCombatantName(combat);
+    static getBannerText(combatant) {
+        var name = this.getCombatantName(combatant);
         let text = '';
-        if (combat?.combatant?.isOwner && !game.user.isGM && combat?.combatant?.players[0]?.active) {
+        if (combatant?.isOwner && !game.user.isGM && combatant?.players[0]?.active) {
             text = `${game.i18n.localize('YOUR-TURN.YourTurn')}, ${name}!`;
         }
-        else if (combat?.combatant?.hidden && !game.user.isGM) {
+        else if (combatant?.hidden && !game.user.isGM) {
             text = game.i18n.localize('YOUR-TURN.SomethingHappens');
         }
         else {
@@ -154,43 +148,15 @@ export default class TurnSubscriber {
         return text;
     }
 
-    static getCombatantName(combat) {
-        var name = combat?.combatant.name;
+    static getCombatantName(combatant) {
+        var name = combatant.name;
         if (game.modules.get('combat-utility-belt')?.active) {
-            if (game.cub.hideNames.shouldReplaceName(combat?.combatant?.actor)) {
-                name = game.cub.hideNames.getReplacementName(combat?.combatant?.actor)
+            if (game.cub.hideNames.shouldReplaceName(combatant?.actor)) {
+                name = game.cub.hideNames.getReplacementName(combatant?.actor)
             }
         }
 
         return name;
-    }
-
-    static createNextImage(combat) {
-        this.checkAndDelete(this.currentImgID);
-
-        const expectedNext = combat?.nextCombatant;
-
-        var nextImg = document.getElementById(this.nextImgID);
-
-        if (nextImg != null) {
-            if (combat?.combatant != expectedNext) {
-                nextImg.remove();
-                this.currentImgID = null;
-            }
-            else {
-                this.currentImgID = this.nextImgID;
-            }
-        }
-
-        this.imgCount = this.imgCount + 1;
-        this.nextImgID = `yourTurnImg${this.imgCount}`;
-
-        let imgHTML = document.createElement("img");
-        imgHTML.id = this.nextImgID;
-        imgHTML.className = "yourTurnImg";
-        imgHTML.src = expectedNext?.actor.img;
-
-        return imgHTML;
     }
 
     static getNextCombatant(combat) {
@@ -225,7 +191,16 @@ export default class TurnSubscriber {
             }
         }
 
-        return `<div class="yourTurnSubheading last">${game.i18n.localize('YOUR-TURN.NextUp')}: <img class="${imgClass}" src="${combatant.actor.img}" />${name}</div>`;
+        let img = "";
+        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
+            img = combatant.token.texture.src;
+            imgClass = imgClass + " token";
+        }
+        else {
+            img = combatant.actor.img;
+        }
+
+        return `<div class="yourTurnSubheading last">${game.i18n.localize('YOUR-TURN.NextUp')}: <img class="${imgClass}" src="${img}" />${name}</div>`;
     }
 
     static checkAndDelete(elementID) {
@@ -234,5 +209,19 @@ export default class TurnSubscriber {
             prevImg.remove();
         }
     }
+
+    static handleUnload() {
+        clearInterval(this?.myTimer);
+        this.myTimer = setInterval(() => {
+            clearInterval(this.myTimer);
+            var element = document.getElementById("yourTurnBannerBackground");
+            element.classList.add("removing");
+    
+            element = document.getElementById("yourTurnBanner");
+            element.classList.add("removing");
+    
+            element = document.getElementById("yourTurnImg");
+            element.classList.add("removing");
+        }, 5000);
+    }
 }
-TurnSubscriber.begin();

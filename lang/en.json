@@ -3,5 +3,8 @@
     "YOUR-TURN.Turn": "Turn",
     "YOUR-TURN.NextUp": "Next Up",
     "YOUR-TURN.SomethingHappens": "Something is happening...",
-    "YOUR-TURN.YourTurn": "It's your Turn"
+    "YOUR-TURN.YourTurn": "It's your Turn",
+    "YOUR-TURN.Setting-TokenImage": "Use the actors token image instead",
+    "YOUR-TURN.Setting-UseFixedNpcColor": "Use fixed banner color for NPCs",
+    "YOUR-TURN.Setting-FixedNpcColor": "NPC banner color"
 }
