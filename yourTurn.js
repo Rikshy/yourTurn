@@ -114,26 +114,33 @@ export default class TurnSubscriber {
     static createBanner(combat) {
         this.checkAndDelete("yourTurnBanner");
 
-        const text = this.getBannerText(combat.combatant);
-        const nextCombatant = this.getNextCombatant(combat);
-
         let bannerDiv = document.createElement("div");
         bannerDiv.id = "yourTurnBanner";
         bannerDiv.className = "yourTurnBanner";
         bannerDiv.style.height = 150;
         bannerDiv.innerHTML = `
-            <p id="yourTurnText" class="yourTurnText">${text}</p>
+            <p id="yourTurnText" class="yourTurnText">
+                ${this.getTurnText(combat.combatant)}
+            </p>
             <div class="yourTurnSubheading">
                 ${game.i18n.localize("YOUR-TURN.Round")} #${combat.round} ${game.i18n.localize('YOUR-TURN.Turn')} #${combat.turn + 1}
             </div>
-            ${this.getNextTurnHtml(nextCombatant)}
+            <div class="yourTurnSubheading last">
+                ${this.getTurnForcast(combat)}
+            </div>
             <div id="yourTurnBannerBackground" class="yourTurnBannerBackground" height="150" />`;
 
         return bannerDiv;
     }
 
-    static getBannerText(combatant) {
-        var name = this.getCombatantName(combatant);
+    static getTurnText(combatant) {
+        var name = combatant.name;
+        if (game.modules.get('combat-utility-belt')?.active) {
+            if (game.cub.hideNames.shouldReplaceName(combatant?.actor)) {
+                name = game.cub.hideNames.getReplacementName(combatant?.actor)
+            }
+        }
+
         let text = '';
         if (combatant?.isOwner && !game.user.isGM && combatant?.players[0]?.active) {
             text = `${game.i18n.localize('YOUR-TURN.YourTurn')}, ${name}!`;
@@ -148,15 +155,29 @@ export default class TurnSubscriber {
         return text;
     }
 
-    static getCombatantName(combatant) {
-        var name = combatant.name;
+    static getTurnForcast(combat) {        
+        const combatant = this.getNextCombatant(combat);
+        
+        let name = combatant.name;
+        let imgClass = "yourTurnImg yourTurnSubheading";
+
         if (game.modules.get('combat-utility-belt')?.active) {
             if (game.cub.hideNames.shouldReplaceName(combatant?.actor)) {
                 name = game.cub.hideNames.getReplacementName(combatant?.actor)
+                imgClass = imgClass + " silhoutte";
             }
         }
 
-        return name;
+        let img = "";
+        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
+            img = combatant.token.texture.src;
+            imgClass = imgClass + " token";
+        }
+        else {
+            img = combatant.actor.img;
+        }
+
+        return `${game.i18n.localize('YOUR-TURN.NextUp')}: <img class="${imgClass}" src="${img}" />${name}`;
     }
 
     static getNextCombatant(combat) {
@@ -178,29 +199,6 @@ export default class TurnSubscriber {
         } while (combatant.hidden && (j < turns.length) && !game.user.isGM)
 
         return combatant;
-    }
-
-    static getNextTurnHtml(combatant) {
-        let name = combatant.name;
-        let imgClass = "yourTurnImg yourTurnSubheading";
-
-        if (game.modules.get('combat-utility-belt')?.active) {
-            if (game.cub.hideNames.shouldReplaceName(combatant?.actor)) {
-                name = game.cub.hideNames.getReplacementName(combatant?.actor)
-                imgClass = imgClass + " silhoutte";
-            }
-        }
-
-        let img = "";
-        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
-            img = combatant.token.texture.src;
-            imgClass = imgClass + " token";
-        }
-        else {
-            img = combatant.actor.img;
-        }
-
-        return `<div class="yourTurnSubheading last">${game.i18n.localize('YOUR-TURN.NextUp')}: <img class="${imgClass}" src="${img}" />${name}</div>`;
     }
 
     static checkAndDelete(elementID) {
