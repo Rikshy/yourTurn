@@ -11,15 +11,18 @@ export default class TurnSubscriber {
 
     static begin() {
         Hooks.on("ready", () => {
-            let firstGm = game.users.find((u) => u.isGM && u.active);
-            this.gmColor = firstGm["color"];
+            const firstGm = game.users.find((u) => u.isGM && u.active);
+            if (firstGm === null)
+                this.gmColor = "#cc3828";
+            else
+                this.gmColor = firstGm["color"];
             Hooks.on("updateCombat", (combat, update, options, userId) => {
-                TurnSubscriber._onUpdateCombat(combat, update, options, userId);
+                TurnSubscriber.onUpdateCombat(combat, update, options, userId);
             });
         });
     }
 
-    static _onUpdateCombat(combat, update, options, userId) {
+    static onUpdateCombat(combat, update, options, userId) {
         if (!(update["turn"] || update["round"])) { return; }
 
         if (combat === null || !combat.started) { return; }
