@@ -7,7 +7,6 @@ export default class TurnSubscriber {
     static nextImgID;
 
     static lastCombatant;
-    static expectedNext;
 
     static begin() {
         Hooks.on("ready", () => {
@@ -169,12 +168,12 @@ export default class TurnSubscriber {
     static createNextImage(combat) {
         this.checkAndDelete(this.currentImgID);
 
-        let expectedNext = combat?.nextCombatant;
+        const expectedNext = combat?.nextCombatant;
 
         var nextImg = document.getElementById(this.nextImgID);
 
         if (nextImg != null) {
-            if (combat?.combatant != this.expectedNext) {
+            if (combat?.combatant != expectedNext) {
                 nextImg.remove();
                 this.currentImgID = null;
             }
