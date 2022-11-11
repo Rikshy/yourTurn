@@ -149,7 +149,7 @@ export default class TurnSubscriber {
             <div class="yourTurnSubheading last">
                 ${this.getTurnForcast(combat)}
             </div>
-            <div id="yourTurnBannerBackground" class="yourTurnBannerBackground" height="150" />`;
+            <div class="yourTurnBannerBackground" height="150" />`;
 
         return bannerDiv;
     }
@@ -237,10 +237,8 @@ export default class TurnSubscriber {
         clearInterval(this?.myTimer);
         this.myTimer = setInterval(() => {
             clearInterval(this.myTimer);
-            var element = document.getElementById("yourTurnBannerBackground");
-            element.classList.add("removing");
-    
-            element = document.getElementById("yourTurnBanner");
+
+            var element = document.getElementById("yourTurnBanner");
             element.classList.add("removing");
     
             element = document.getElementById("yourTurnImg");
