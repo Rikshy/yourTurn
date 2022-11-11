@@ -6,6 +6,15 @@ Hooks.on("init", () => {
 		type: Boolean,
 		default: false
 	});
+    if (game.system.id === "pf2e") {
+        game.settings.register("your-turn", "ScaleImageToSize", {
+            scope: "world",
+            config: true,
+            name: game.i18n.localize('YOUR-TURN.Setting-ScaleImageToSize'),
+            type: Boolean,
+            default: false
+        });
+    }
 	game.settings.register("your-turn", "UseFixedNpcColor", {
 		scope: "world",
 		config: true,
@@ -13,15 +22,14 @@ Hooks.on("init", () => {
 		type: Boolean,
 		default: false
 	});
-    ColorPicker.register("your-turn", "NpcColor",  {
-          name: game.i18n.localize('YOUR-TURN.Setting-FixedNpcColor'),
-          default: "#004040",
-          scope: "world",
-          config: true
-        }, {
-          format: "hex"
-        }
-      )
+    ColorPicker.register("your-turn", "NpcColor", {
+        name: game.i18n.localize('YOUR-TURN.Setting-FixedNpcColor'),
+        default: "#004040",
+        scope: "world",
+        config: true
+    }, {
+        format: "hex"
+    });
 });
 
 Hooks.on("ready", () => {
@@ -42,7 +50,7 @@ export default class TurnSubscriber {
 
         if (combat.combatant == this.lastCombatant) { return; }
 
-        this.lastCombatant = combat.combatant;       
+        this.lastCombatant = combat.combatant;
 
         let color = "";
         if (combat.combatant?.hasPlayerOwner && combat.combatant?.players[0].active) {
@@ -85,19 +93,32 @@ export default class TurnSubscriber {
         
         //current Actor Image
         var ytImgClass = new Array();
-        ytImgClass.push("adding");        
+        ytImgClass.push("adding");
         if (combatant?.hidden && !game.user.isGM) {
             ytImgClass.push("silhoutte");
+        }   
+
+        if (game.settings.get("your-turn", "ScaleImageToSize")) {
+            if (game.system.id === "pf2e") {
+                switch (combatant.actor.size) {
+                    case "tiny":
+                        ytImgClass.push("tiny");
+                        break;
+                    case "sm":
+                        ytImgClass.push("sm");
+                        break;
+                    case "med":
+                        ytImgClass.push("med");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        } else {
+            ytImgClass.push("med");
         }
 
-        let img = "";
-        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
-            img = combatant.token.texture.src;
-            ytImgClass.push("token");
-        }
-        else {
-            img = combatant.actor.img;
-        }
+        const img = this.getCombatantImage(combatant);
 
         let currentImgHTML = document.createElement("img");
         currentImgHTML.id = "yourTurnImg";
@@ -155,7 +176,7 @@ export default class TurnSubscriber {
         return text;
     }
 
-    static getTurnForcast(combat) {        
+    static getTurnForcast(combat) {
         const combatant = this.getNextCombatant(combat);
         
         let name = combatant.name;
@@ -168,20 +189,13 @@ export default class TurnSubscriber {
             }
         }
 
-        let img = "";
-        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
-            img = combatant.token.texture.src;
-            imgClass = imgClass + " token";
-        }
-        else {
-            img = combatant.actor.img;
-        }
+        const img = this.getCombatantImage(combatant);
 
         return `${game.i18n.localize('YOUR-TURN.NextUp')}: <img class="${imgClass}" src="${img}" />${name}`;
     }
 
     static getNextCombatant(combat) {
-        let combatant = ''
+        let combatant = '';
         let j = 1;
 
         let turns = combat.turns;
@@ -199,6 +213,17 @@ export default class TurnSubscriber {
         } while (combatant.hidden && (j < turns.length) && !game.user.isGM)
 
         return combatant;
+    }
+
+    static getCombatantImage(combatant) {
+        let img = "";
+        if (game.settings.get("your-turn", "tokenImage") && combatant.token) {
+            img = combatant.token.texture.src;
+        }
+        else {
+            img = combatant.actor.img;
+        }
+        return img;
     }
 
     static checkAndDelete(elementID) {

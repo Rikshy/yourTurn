@@ -145,10 +145,17 @@
   object-fit: scale-down;
   animation: none;
   image-rendering: optimizeSpeed;
+  transform: scale(95%);
 }
 
-.yourTurnImg.token {
+.yourTurnImg.med {
   transform: scale(80%);
+}
+.yourTurnImg.sm {
+  transform: scale(60%);
+}
+.yourTurnImg.tiny {
+  transform: scale(40%);
 }
 
 @keyframes imgSlideDown {
