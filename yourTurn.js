@@ -59,7 +59,11 @@ export default class TurnSubscriber {
         else if (game.settings.get("your-turn", "UseFixedNpcColor")) {
             color = game.settings.get("your-turn", "NpcColor");
         } else {
-            color = game.users.find((u) => u.isGM && u.active)["color"];
+            const gm = game.users.find((u) => u.isGM && u.active);
+            if (gm)
+                color = gm["color"];
+            else
+                color = game.settings.get("your-turn", "NpcColor");
         }
 
         var r = document.querySelector(':root');
