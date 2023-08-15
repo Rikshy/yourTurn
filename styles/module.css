@@ -16,7 +16,7 @@
   position: absolute;
   vertical-align: middle;
   transition: height 5s;
-  width: 100%;
+  width: 80%;
 }
 
 .yourTurnBanner {
@@ -63,8 +63,8 @@
   position: absolute;
   object-fit: scale-down;
   border-width: 0px;
-  width: 1000px;
-  height: 1000px;
+  width: 500px;
+  height: 500px;
   z-index: 1000;
   opacity: 0.001;
 }
@@ -96,7 +96,6 @@
   color: lightgray;
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
   font-weight: bold;
-  text-overflow: clip;
   margin-bottom: auto;
   margin-top: auto;
   text-shadow: 2px 2px 5px black;
@@ -122,6 +121,7 @@
   width: auto;
   margin-inline-start: 0px;
   padding-right: 5px;
+  text-overflow: clip;
 }
 
 .yourTurnSubheading.last {
@@ -190,20 +190,12 @@
     padding-right: 0px;
   }
 
-  50% {
+  50%, 70% {
     background-color: var(--yourTurnPlayerColorTransparent)
   }
 
-  60% {
+  60%, 75% {
     background-color: var(--yourTurnPlayerColor)
-  }
-
-  70% {
-    background-color: var(--yourTurnPlayerColorTransparent)
-  }
-
-  75% {
-    background-color: var(--yourTurnPlayerColor);
   }
 
   to {
